@@ -124,7 +124,7 @@ function addPlayer(mode, prefix, channel, tpn){
       }
       strWrite += pname;
       //log('strWrite is "'+strWrite+'"');
-      file.write(strWrite);  //ファイルポイントが最後になっているので、そこから追加書き込み
+      file.write(strWrite);  //ファイルポインタが最後になっているので、そこから追加書き込み
       
       if((non+1) === limit){
         plys.push(pname);
