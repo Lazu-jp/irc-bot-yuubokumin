@@ -1,11 +1,14 @@
 // IRC bot for yuubokumin
 /*
+[ Info ]
+  Last Updated: 2021/04/03
+[ Explanation ]
   this script character code is UTF-8
 */
 
 var limit = 8;
 var filePath = './irc_bot_yuubokumin.txt';
-var targetChannel = '#xxx';
+var targetChannel = '#aochd';
 
 function event::onChannelText(prefix, channel, text) {
   //log('----start-----');
@@ -15,70 +18,66 @@ function event::onChannelText(prefix, channel, text) {
   
   var ch_lc = channel.toLowerCase();
   //log('ch_lc:'+ch_lc);
+  
   if( ch_lc == targetChannel){
-    //log('channel ok');
-    switch(text){
-      case 'はじめる':
-        var file = openFile(filePath, false);
-        file.truncate();
-        file.close();
-        send(channel, 'BOT:つのります');
-        break;
-      case 'くわわる':
-        //log('proccess "add"');
-        addPlayer(1, prefix, channel, '');
-        break;
-      case 'ぬける':
-        delPlayer(1, prefix, channel, '');
-        break;
-      case 'しらべる':
-        var file = openFile(filePath, true);
-        var doc = file.readAll();
-        var plys = doc.split(':');
-        var plylist = '';
-        for(var i=0; i<plys.length; i++){
-          if(i > 0){
-            plylist += ', ';
-          }
-          plylist += plys[i];
+    if(text.match(/^つのる$/i)){
+      var file = openFile(filePath, false);
+      file.truncate();
+      file.close();
+      send(channel, 'BOT:つのります');
+    }else if(text.match(/^くわわる$/i)){
+      addPlayer(1, prefix, channel, '');
+    }else if(text.match(/^ぬける$/i)){
+      delPlayer(1, prefix, channel, '');
+    }else if(text.match(/^しらべる$/i)){
+      var file = openFile(filePath, true);
+      var doc = file.readAll();
+      var plys = doc.split(':');
+      var plylist = '';
+      for(var i=0; i<plys.length; i++){
+        if(i > 0){
+          plylist += ', ';
         }
-        send(channel, 'BOT:参加者：'+plylist);
-        file.close();
-        break;
-      case 'けっか':
-        var file = openFile(filePath, true);
-        var doc = file.readAll();
-        var plys = doc.split(':');
-        var non = 0;  // number of names in textfile
-        if(plys != ''){
-          non = plys.length;
-        }
-        //log('non:'+non);
-        
-        if(non === limit){
-          outputLink(channel, plys);
-        }else{
-          send(channel, 'プレイヤー数が足りません');
-        }
-        file.close();
-        break;
-      case 'こまんど':
-        send(channel, 'BOT:独立コマンドは、はじめる、くわわる、ぬける、しらべる、けっか です。');
-        send(channel, 'BOT:他人を変更できるコマンドは、くわえる、ぬけさせる です。例.「くわえる Kenji」、「ぬけさせる Kenji」。');
-        break;
-      default:
-        //log('the command is unknown');
-        if(text.indexOf('くわえる ') === 0){
-          // get target player name
-          var tpn = text.substr(5);
-          //log('tpn:'+tpn);
-          addPlayer(2, prefix, channel, tpn);
-        }else if(text.indexOf('ぬけさせる ') === 0){
-          // get target player name
-          var tpn = text.substr(6);
-          //log('tpn:'+tpn);
-          delPlayer(2, prefix, channel, tpn);
-        }
+        plylist += plys[i];
+      }
+      send(channel, 'BOT:参加者：'+plylist);
+      file.close();
+    }else if(text.match(/^けっか$/i)){
+      var file = openFile(filePath, true);
+      var doc = file.readAll();
+      var plys = doc.split(':');
+      var non = 0;  // number of names in textfile
+      if(plys != ''){
+        non = plys.length;
+      }
+      //log('non:'+non);
+      
+      if(non === limit){
+        outputLink(channel, plys);
+      }else{
+        send(channel, 'プレイヤー数が足りません');
+      }
+      file.close();
+    }else if(text.match(/^へるぷ$/i)){
+      send(channel, 'BOT:基本コマンドは、「つのる」「しらべる」「けっか」です。自分に対するコマンドは「くわわる」「ぬける」です。他人に対するコマンドは「くわえる」「ぬく」です(例.「くわえる Kenji」)。');
+    }else if(text.match(/^くわえる/i)){
+      var targets = text.substr(4);
+      if(targets.match(/^ (.+)$/i) !== null || targets.match(/^　(.+)$/i) !== null){
+        var pname = targets.substr(1);
+        addPlayer(2, prefix, channel, pname);
+      }else{
+        send(channel, 'BOT:プレイヤー名を指定してください(例:「くわえる Kenji」)');
+      }
+    }else if(text.match(/^ぬく/i)){
+      var targets = text.substr(2);
+      if(targets.match(/^ (.+)$/i) !== null || targets.match(/^　(.+)$/i) !== null){
+        var pname = targets.substr(1);
+        delPlayer(2, prefix, channel, pname);
+      }else{
+        send(channel, 'BOT:プレイヤー名を指定してください(例:「ぬく Kenji」)');
+      }
+    }else{
+      //log('The command is not found.');
     }
   }
 }
@@ -211,7 +210,7 @@ function outputLink(channel, plys){
   for(var i=0; i<plys.length; i++){
     kwGET += '&kw'+(i+1)+'='+plys[i];
   }
-  send(channel, 'BOT:http://lazuaoe.php.xdomain.jp/rate/mkt?stp=2&nop='+limit+kwGET);
+  send(channel, 'BOT:http://lazuaoe.php.xdomain.jp/rate/?act=mkt&stp=2&nop='+limit+kwGET);
 }
 
 /*
@@ -230,14 +229,3 @@ function getIrcUsername(prefix){
     return false;
   }
 }
-/*
-  ソースの候補
-  //file.writeLine("aaa");
-  //file.write("bbb");
-  //var cnt = (text.match(/\r\n/g) || []).length;
-  
-  // check value
-  for(var i=0; i<plys.length; i++){
-    log('P'+(i+1)+':'+plys[i]);
-  }
-*/
